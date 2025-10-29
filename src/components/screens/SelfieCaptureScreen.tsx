@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 type SelfieCaptureProps = {
   transactionID: string;
-  onCapture: (file: File) => Promise<void> | void;
+  onCapture: (file: File, previewUrl: string) => Promise<void> | void;
   onSkip: () => void;
   isLoading?: boolean;
 };
@@ -18,6 +18,8 @@ export const SelfieCaptureScreen: React.FC<SelfieCaptureProps> = ({
   const [streamError, setStreamError] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [selfieFile, setSelfieFile] = useState<File | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -85,23 +87,38 @@ export const SelfieCaptureScreen: React.FC<SelfieCaptureProps> = ({
       // Draw the current frame from video to canvas
       ctx.drawImage(video, 0, 0, width, height);
       
-      // Convert canvas to blob
+      // Convert canvas to blob and data URL for preview
       const blob: Blob | null = await new Promise(resolve => 
         canvas.toBlob(resolve, 'image/jpeg', 0.9)
       );
       
       if (!blob) throw new Error('Failed to capture image');
       
-      // Create file from blob
+      // Create file and preview
       const file = new File([blob], `selfie_${transactionID}.jpg`, { type: 'image/jpeg' });
+      const imageUrl = canvas.toDataURL('image/jpeg', 0.9);
       
-      await onCapture(file);
+      // Save for preview
+      setSelfieFile(file);
+      setCapturedImage(imageUrl);
     } catch (err) {
       console.error('Capture error:', err);
       setStreamError('Failed to capture photo. Please try again.');
     } finally {
       setIsCapturing(false);
     }
+  };
+
+  const handleConfirmSelfie = async () => {
+    if (selfieFile && capturedImage) {
+      await onCapture(selfieFile, capturedImage);
+    }
+  };
+
+  const handleRetakeSelfie = () => {
+    setCapturedImage(null);
+    setSelfieFile(null);
+    setStreamError(null);
   };
 
   return (
@@ -134,6 +151,56 @@ export const SelfieCaptureScreen: React.FC<SelfieCaptureProps> = ({
               Continue Without Selfie
             </button>
           </div>
+        ) : capturedImage ? (
+          /* Selfie Preview */
+          <>
+            <div className="mb-6">
+              <h3 className="text-lg font-medium text-slate-200 mb-3 text-center">Preview Your Selfie</h3>
+              <div className="relative bg-black rounded-xl overflow-hidden border border-slate-700/50">
+                <img 
+                  src={capturedImage} 
+                  alt="Captured selfie" 
+                  className="w-full h-64 object-cover"
+                  style={{ transform: 'scaleX(-1)' }} // Mirror to match video preview
+                />
+                
+                {isLoading && (
+                  <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center">
+                    <div className="text-slate-200 text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mx-auto mb-2"></div>
+                      <p className="text-sm">Uploading...</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleConfirmSelfie}
+                disabled={isLoading}
+                className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 disabled:from-slate-600 disabled:to-slate-600 text-white font-medium transition-all duration-200 shadow-lg"
+              >
+                {isLoading ? 'Uploading...' : 'Confirm & Upload'}
+              </button>
+
+              <button
+                onClick={handleRetakeSelfie}
+                disabled={isLoading}
+                className="px-4 py-3 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 text-slate-200 font-medium transition-colors border border-slate-600"
+              >
+                Retake
+              </button>
+
+              <button
+                onClick={onSkip}
+                disabled={isLoading}
+                className="px-4 py-3 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 text-slate-200 font-medium transition-colors border border-slate-600"
+              >
+                Skip
+              </button>
+            </div>
+          </>
         ) : (
           <>
             <div className="mb-6">

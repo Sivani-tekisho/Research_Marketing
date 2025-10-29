@@ -7,6 +7,8 @@ import { ResultScreen } from './screens/ResultScreen';
 import { MeetingSchedulerModal } from './features/MeetingSchedulerModal';
 import { MeetingConfirmationScreen } from './screens/MeetingConfirmationScreen';
 import { Toast } from './ui/Toast';
+import { StepIndicator } from './ui/StepIndicator';
+import { ErrorDisplay } from './ui/ErrorDisplay';
 import { CardScannerAPI } from '../services/api';
 import type { CardScanState, UserInfo, BusinessCardData } from '../types/cardScanner';
 
@@ -15,6 +17,7 @@ export function CardScannerApp() {
     step: 'landing',
     transactionID: null,
     capturedImage: null,
+    selfieImage: null,
     extractedData: null,
     processingStatus: null,
     isLoading: false,
@@ -115,18 +118,28 @@ export function CardScannerApp() {
       console.error('❌ Upload error:', err);
       setState(prev => ({
         ...prev,
-        error: err instanceof Error ? err.message : 'Failed to upload card',
+        error: err instanceof Error ? err.message : 'Failed to upload card. Please check your connection and try again.',
         isLoading: false,
       }));
       setToast({ message: 'Failed to upload card', type: 'error' });
     }
   };
 
+  const handleRetryCapture = () => {
+    if (state.capturedImage) {
+      handleCapture(state.capturedImage);
+    }
+  };
+
+  const handleDismissError = () => {
+    setState(prev => ({ ...prev, error: null }));
+  };
+
   const handleCancelCapture = () => {
     setState(prev => ({ ...prev, step: 'landing' }));
   };
 
-  const handleSelfieCaptured = async (selfieFile: File) => {
+  const handleSelfieCaptured = async (selfieFile: File, previewUrl: string) => {
     if (!state.transactionID) {
       setToast({ message: 'Missing transaction ID', type: 'error' });
       return;
@@ -142,7 +155,12 @@ export function CardScannerApp() {
       // await CardScannerAPI.uploadSelfie(state.transactionID, selfieFile);
       console.log('📸 Selfie captured:', selfieFile.name, `${(selfieFile.size / 1024).toFixed(2)}KB`);
       
-      setState(prev => ({ ...prev, isLoading: false, step: 'result' }));
+      setState(prev => ({ 
+        ...prev, 
+        isLoading: false, 
+        step: 'result',
+        selfieImage: previewUrl 
+      }));
       setToast({ message: 'Selfie captured successfully!', type: 'success' });
     } catch (err) {
       console.error('Selfie capture error:', err);
@@ -204,6 +222,7 @@ export function CardScannerApp() {
       step: 'landing',
       transactionID: null,
       capturedImage: null,
+      selfieImage: null,
       extractedData: null,
       processingStatus: null,
       isLoading: false,
@@ -217,16 +236,32 @@ export function CardScannerApp() {
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-slate-900">
+      <StepIndicator currentStep={state.step} />
+      
       {state.step === 'landing' && (
         <LandingScreen onStartScan={handleStartScan} />
       )}
 
       {state.step === 'capture' && (
-        <CardCaptureScreen 
-          onCapture={handleCapture} 
-          onCancel={handleCancelCapture}
-        />
+        <div className="relative">
+          <CardCaptureScreen 
+            onCapture={handleCapture} 
+            onCancel={handleCancelCapture}
+          />
+          
+          {/* Error Display Overlay */}
+          {state.error && (
+            <div className="absolute bottom-4 left-4 right-4 z-10">
+              <ErrorDisplay
+                error={state.error}
+                onRetry={state.capturedImage ? handleRetryCapture : undefined}
+                onDismiss={handleDismissError}
+                title="Upload Failed"
+              />
+            </div>
+          )}
+        </div>
       )}
 
       {state.step === 'processing' && state.transactionID && (
@@ -247,6 +282,7 @@ export function CardScannerApp() {
           userInfo={state.extractedData}
           llmResponse={businessCardData?.llm_response || null}
           processingStatus={state.processingStatus || 'pending'}
+          selfieImage={state.selfieImage}
           onScheduleMeeting={handleScheduleMeeting}
           onScanAnother={handleScanAnother}
         />
@@ -276,6 +312,6 @@ export function CardScannerApp() {
           onClose={() => setToast(null)}
         />
       )}
-    </>
+    </div>
   );
 }

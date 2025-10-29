@@ -49,6 +49,7 @@ export interface CardScanState {
   step: CardScanStep;
   transactionID: string | null;
   capturedImage: File | null;
+  selfieImage: string | null; // Data URL for preview
   extractedData: UserInfo | null;
   processingStatus: 'pending' | 'processing' | 'completed' | 'failed' | null;
   isLoading: boolean;

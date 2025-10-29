@@ -2,12 +2,40 @@ import { motion } from 'framer-motion';
 import { CreditCard } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
+import { useEffect, useState } from 'react';
 
 interface ProcessingScreenProps {
   transactionID: string;
 }
 
 export function ProcessingScreen({ transactionID }: ProcessingScreenProps) {
+  const [progress, setProgress] = useState(0);
+  const [currentStep, setCurrentStep] = useState('Initializing...');
+
+  useEffect(() => {
+    const steps = [
+      { progress: 20, message: 'Analyzing image quality...' },
+      { progress: 40, message: 'Detecting text regions...' },
+      { progress: 60, message: 'Extracting text content...' },
+      { progress: 80, message: 'Processing with AI...' },
+      { progress: 95, message: 'Finalizing results...' },
+    ];
+
+    let currentIndex = 0;
+    const interval = setInterval(() => {
+      if (currentIndex < steps.length) {
+        const step = steps[currentIndex];
+        setProgress(step.progress);
+        setCurrentStep(step.message);
+        currentIndex++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 1200);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
       <motion.div
@@ -32,7 +60,12 @@ export function ProcessingScreen({ transactionID }: ProcessingScreenProps) {
             <CreditCard className="w-10 h-10 text-cyan-400" />
           </motion.div>
 
-          <LoadingSpinner size="lg" />
+          <LoadingSpinner 
+            size="lg" 
+            message={currentStep}
+            progress={progress}
+            showProgress={true}
+          />
 
           <div className="space-y-3">
             <h2 className="text-2xl font-bold text-slate-200">Processing Your Business Card</h2>

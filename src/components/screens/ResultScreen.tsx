@@ -8,6 +8,7 @@ interface ResultScreenProps {
   userInfo: UserInfo;
   llmResponse: LLMResponse | null;
   processingStatus: 'pending' | 'processing' | 'completed' | 'failed';
+  selfieImage?: string | null;
   onScheduleMeeting: () => void;
   onScanAnother: () => void;
 }
@@ -16,6 +17,7 @@ export function ResultScreen({
   userInfo, 
   llmResponse, 
   processingStatus,
+  selfieImage,
   onScheduleMeeting, 
   onScanAnother 
 }: ResultScreenProps) {
@@ -55,6 +57,28 @@ export function ResultScreen({
             }`}>
               Status: {processingStatus.toUpperCase()}
             </div>
+
+            {/* Selfie Thumbnail */}
+            {selfieImage && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.4 }}
+                className="flex items-center justify-center"
+              >
+                <div className="text-center">
+                  <p className="text-sm font-medium text-slate-300 mb-2">Your Profile Photo</p>
+                  <div className="inline-block p-1 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500">
+                    <img
+                      src={selfieImage}
+                      alt="Your selfie"
+                      className="w-20 h-20 rounded-full object-cover"
+                      style={{ transform: 'scaleX(-1)' }}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
             {/* Extracted Information */}
             <div className="space-y-4">
