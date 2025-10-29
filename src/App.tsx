@@ -46,6 +46,35 @@ function App() {
     setIsVoiceAssistantOpen(false);
   };
 
+  // Render CardScannerApp in fullscreen mode
+  if (activeView === 'cardscanner') {
+    return (
+      <div className="flex flex-col h-screen bg-slate-900 relative overflow-hidden">
+        {/* Dark glassmorphism background elements */}
+        <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-3xl"></div>
+        <div className="absolute top-20 left-20 w-72 h-72 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-gradient-to-r from-purple-400/10 to-pink-400/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        
+        {/* Fullscreen Card Scanner with Exit Button */}
+        <div className="relative z-10 h-screen">
+          {/* Exit Button */}
+          <button
+            onClick={() => handleNavClick('home')}
+            className="absolute top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-slate-800/80 backdrop-blur-sm text-slate-200 rounded-xl hover:bg-slate-700/80 transition-colors border border-slate-600"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Home
+          </button>
+          
+          <CardScannerApp />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full bg-slate-900 relative overflow-hidden">
       {/* Dark glassmorphism background elements */}
@@ -81,7 +110,6 @@ function App() {
               setIsSidePanelOpen={setIsSidePanelOpen}
             />
           )}
-          {activeView === 'cardscanner' && <CardScannerApp />}
         </main>
       </div>
 

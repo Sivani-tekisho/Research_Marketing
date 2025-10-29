@@ -236,7 +236,7 @@ export function CardScannerApp() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="h-screen bg-slate-900 flex flex-col">
       <StepIndicator currentStep={state.step} />
       
       {state.step === 'landing' && (
